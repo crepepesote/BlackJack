@@ -50,7 +50,7 @@ public class Controll implements ActionListener{
 
 	//Generar socket cuando se permite nuevo jugador en el server
 	private void generateSocket (String id, String name) throws UnknownHostException, IOException {
-		socket = new Socket("127.0.0.1",9091);
+		socket = new Socket(id,9091);
 		outStream = new DataOutputStream(this.socket.getOutputStream());
 		inStream = new DataInputStream(this.socket.getInputStream());
 		new Thread(() -> {
