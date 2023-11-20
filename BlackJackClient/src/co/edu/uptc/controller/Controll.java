@@ -20,8 +20,6 @@ public class Controll implements ActionListener{
 	private Socket socket;
 	private DataOutputStream outStream;
 	private DataInputStream inStream;
-	private ObjectOutputStream objOut;
-	private ObjectInputStream objIn;
 	private ArrayList<String> cards;
 
 	public Controll() {
@@ -38,11 +36,11 @@ public class Controll implements ActionListener{
 				break;
 			}
 			case "take": {	
-				generateSocket(frame.obtainServer(), frame.obtainName());
+				takeCard();
 				break;
 			}
 			case "pass": {	
-				generateSocket(frame.obtainServer(), frame.obtainName());
+				pass();
 				break;
 			}
 			}
@@ -52,28 +50,18 @@ public class Controll implements ActionListener{
 
 	//Generar socket cuando se permite nuevo jugador en el server
 	private void generateSocket (String id, String name) throws UnknownHostException, IOException {
-		socket = new Socket("127.0.0.1",9091);
-		try {
-
-			outStream = new DataOutputStream(this.socket.getOutputStream());
-			objOut = new ObjectOutputStream(this.socket.getOutputStream());
-			inStream = new DataInputStream(this.socket.getInputStream());
-			objIn = new ObjectInputStream(this.socket.getInputStream());
-
-			new Thread(() -> {
-				try {
-					handleServerResponse(name);
-				} catch (IOException e) {
-					System.out.println("Error de E/S: " + e.getMessage());
-				} catch (ClassNotFoundException e) {
-					System.out.println("Clase no encontrada: " + e.getMessage());
-				}
-			}).start();
-		} catch (UnknownHostException e) {
-			System.out.println("Host desconocido: " + e.getMessage());
-		} catch (IOException e) {
-			System.out.println("Error de E/S: " + e.getMessage());
-		}
+		socket = new Socket(id,9091);
+		outStream = new DataOutputStream(this.socket.getOutputStream());
+		inStream = new DataInputStream(this.socket.getInputStream());
+		new Thread(() -> {
+			try {
+				handleServerResponse(name);
+			} catch (IOException e) {
+				System.out.println("Error de E/S: " + e.getMessage());
+			} catch (ClassNotFoundException e) {
+				System.out.println("Clase no encontrada: " + e.getMessage());
+			}
+		}).start();
 	}
 
 	private void handleServerResponse(String name) throws IOException, ClassNotFoundException {
@@ -99,25 +87,68 @@ public class Controll implements ActionListener{
 			for(int i=0 ; i < num ; i++ ) {
 				cards.add(inStream.readUTF());
 			}
-		
-			
+
 			frame.startGame(cards);
-			
-			if(inStream.readUTF().equals("win")) {
+			String s = inStream.readUTF();
+			System.out.println(s);
+			if(s.equals("win")) {
 				//gano hacer algo
-				
+
 			}
 		}
 	}
 
 	private void takeCard() throws IOException {
 		outStream.writeUTF("take");
-		cards.add(inStream.readUTF());
+		
+		cards.add(inStream.readUTF());	
+		
 		frame.updatecards(cards);
+		String statusgame=inStream.readUTF();
+		if(statusgame.equals("continue")) {
+			String status = inStream.readUTF();
+			if(status.equals("lost")) {
+				lost();
+			}
+		}else if(statusgame.equals("Empate")) {
+			inStream.readUTF();
+			inStream.readUTF();
+//			inStream.readUTF();
+			frame.showresults();
+		}else {
+			inStream.readUTF();
+			inStream.readUTF();
+//			inStream.readUTF();
+			frame.showresults();
+		}
+
+	}
+
+	private void pass() throws IOException {
+		new Thread(() -> {
+			frame.waitResult("pasado");
+			try {
+				outStream.writeUTF("pass");
+				inStream.readUTF();
+				inStream.readUTF();
+//				inStream.readUTF();
+				frame.showresults();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}).start();
 	}
 	
-	private void pass() throws IOException {
-		outStream.writeUTF("pass");
+	private void lost() throws IOException {
+		new Thread(() -> {
+			frame.waitResult("perdido");
+			try {
+				outStream.writeUTF("lost");
+				inStream.readUTF();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}).start();
 	}
 
 	//main

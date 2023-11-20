@@ -1,6 +1,7 @@
 package co.edu.uptc.view.panels;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -21,7 +22,7 @@ public class PanelGame extends JPanel {
 	private ArrayList<int []> cardPosition;
 	private ArrayList<String>cards;
 	private ArrayList<JLabel> labels;
-
+	private JLabel wating;
 	private CustomBoton take;
 	private CustomBoton pass;
 
@@ -100,6 +101,17 @@ public class PanelGame extends JPanel {
 		this.cards = car;
 		this.revalidate();
 		this.repaint();
+	}
+	
+	public void waitingresult (String status) {
+		this.remove(pass);
+		this.remove(take);
+		wating = new JLabel("Has "+status+", esperando resultados" );
+		wating .setBounds((int) (this.getWidth()*0.22), (int) (this.getHeight()*0.8), (int) (this.getWidth()*0.5), (int) (this.getHeight()*0.2));
+		wating .setFont(new Font("Arial", Font.BOLD, 30));
+		this.add(wating );
+		this.repaint();
+		this.revalidate();
 	}
 
 	public ArrayList<String> getCards() {
